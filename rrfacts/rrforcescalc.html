@@ -1,0 +1,260 @@
+<HTML>
+<HEAD>
+	<TITLE>Train Forces Calculator by AAK</TITLE>
+
+	<SCRIPT LANGUAGE=JAVASCRIPT TYPE="TEXT/JAVASCRIPT">
+	<!-- Hide script
+
+
+	function enableAll(){
+		trainCalculator.txLocoHp.disabled=false
+		trainCalculator.txLocoTons.disabled=false
+		trainCalculator.txSpeed.disabled=false	
+		trainCalculator.txTrainTons.disabled=false
+		trainCalculator.txCarCount.disabled=false
+	}
+
+	function raSpeedClicked(){
+		//trainCalculator.taAnswers.value = "speed clicked"
+		enableAll()
+		trainCalculator.txSpeed.value="0"
+		trainCalculator.txSpeed.disabled=true
+	}
+
+	function raHorsepowerClicked(){
+		//trainCalculator.taAnswers.value = "hp clicked"
+		enableAll()
+		trainCalculator.txLocoHp.value="0"
+		trainCalculator.txLocoHp.disabled=true
+		trainCalculator.txLocoTons.value="0"
+		trainCalculator.txLocoTons.disabled=true
+	}
+
+	function raTonnageClicked(){
+		//trainCalculator.taAnswers.value = "tonnage clicked"
+		enableAll()
+		trainCalculator.txTrainTons.value="0"
+		trainCalculator.txTrainTons.disabled=true
+	}
+
+	function getCalcToPerform(){
+		//Determine which radio button is selected.
+		var calcToPerform = "AAK Unknown"
+		for (var i=0; i<trainCalculator.raCalc.length; i++) {
+			if (trainCalculator.raCalc[i].checked) {
+				calcToPerform = trainCalculator.raCalc[i].value
+			}
+		}
+		//Go to proper calculation based on radio button.
+		if (calcToPerform == "Speed"){
+			findSpeed()
+		}
+		else if (calcToPerform == "Horsepower"){
+			findHorsepower()
+		}
+		else if (calcToPerform == "Tonnage"){
+			findTonnage()
+		}
+	}
+
+	function findSpeed(){
+		//var mph = 20
+		var Speed = parseFloat(trainCalculator.txSpeed.value)
+		var locoHp = parseFloat(trainCalculator.txLocoHp.value) * parseFloat(trainCalculator.txLocoEff.value) / 100
+		var locoTons = parseFloat(trainCalculator.txLocoTons.value)
+		var trainTons = parseFloat(trainCalculator.txTrainTons.value)
+		var totalTons = trainTons + locoTons
+		var carCount = parseFloat(trainCalculator.txCarCount.value)  + (locoTons/180)
+		var tonsPerCar = totalTons / carCount
+		var tonsPerAxle = tonsPerCar / parseFloat(trainCalculator.txCarAxles.value)
+		var carFaceArea = parseFloat(trainCalculator.txFaceArea.value)
+		var gradeDrag = parseFloat(trainCalculator.txGrade.value) * 20 * totalTons		
+		var curveDrag = parseFloat(trainCalculator.txCurveDegrees.value) * totalTons 
+		var rollDrag = 0
+		var mph = 0
+		var requiredHp = 0
+
+		// Try each mph until required Hp is greater  than locoHp
+		for(mph = 1; mph < 500; mph = mph + 0.01){
+			rollDrag = (1.3 + (29/tonsPerAxle) + (0.045 * mph) + (0.0005 * carFaceArea * mph * mph / tonsPerCar)) *totalTons
+			requiredHp = (rollDrag + gradeDrag + curveDrag) * mph * 0.002667 
+			if(requiredHp > locoHp){
+				break
+			}
+		}
+		totalDrag = rollDrag + gradeDrag + curveDrag
+		mph = mph - 0.01
+		assignAnswers(locoHp, mph, rollDrag, gradeDrag, curveDrag, totalDrag)
+	}
+
+	function findHorsepower(){
+		//Have tonnage and speed so calc Hp needed.
+		var mph = parseFloat(trainCalculator.txSpeed.value)
+		var locoHp = parseFloat(trainCalculator.txLocoHp.value) * parseFloat(trainCalculator.txLocoEff.value) / 100
+		var locoTons = parseFloat(trainCalculator.txLocoTons.value)
+		var trainTons = parseFloat(trainCalculator.txTrainTons.value)
+		var totalTons = trainTons + locoTons
+		var carCount = parseFloat(trainCalculator.txCarCount.value)  + (locoTons/180)
+		var tonsPerCar = totalTons / carCount
+		var tonsPerAxle = tonsPerCar / parseFloat(trainCalculator.txCarAxles.value)
+		var carFaceArea = parseFloat(trainCalculator.txFaceArea.value)
+		var gradeDrag = parseFloat(trainCalculator.txGrade.value) * 20 * totalTons		
+		var curveDrag = parseFloat(trainCalculator.txCurveDegrees.value) * totalTons 
+		var rollDrag = 0
+		var requiredHp = 0
+		var locoUnits = 0
+		var locoDrag = 0
+		//Calc train drag.
+		rollDrag = (1.3 + (29/tonsPerAxle) + (0.045 * mph) + (0.0005 * carFaceArea * mph * mph / tonsPerCar)) *totalTons
+		//Calc hp needed.
+		requiredHp = (rollDrag + gradeDrag + curveDrag) * mph * 0.002667
+		//Calc number of 4000 hp units needed and calc hp required to move themselves and train.
+		locoUnits = requiredHp/4000
+		locoTons = locoUnits * 200
+		//locoDrag = roll+grade+curve for locos.
+		locoDrag = ((2.18 + (.045*mph) + (.1*mph*mph))*locoTons)+(parseFloat(trainCalculator.txGrade.value)*20*locoTons)+(parseFloat(trainCalculator.txCurveDegrees.value)*locoTons)
+		totalDrag = rollDrag + locoDrag + gradeDrag + curveDrag
+		locoHp = totalDrag * mph * .002667
+		assignAnswers(locoHp, mph, rollDrag, gradeDrag, curveDrag, totalDrag)
+	}
+
+	function findTonnage(){
+		//var mph = 20
+		var Speed = parseFloat(trainCalculator.txSpeed.value)
+		var locoHp = parseFloat(trainCalculator.txLocoHp.value) * parseFloat(trainCalculator.txLocoEff.value) / 100
+		var locoTons = parseFloat(trainCalculator.txLocoTons.value)
+		var trainTons = parseFloat(trainCalculator.txTrainTons.value)
+		var totalTons = trainTons + locoTons
+		var carCount = parseFloat(trainCalculator.txCarCount.value)  + (locoTons/180)
+		var tonsPerCar = totalTons / carCount
+		var tonsPerAxle = tonsPerCar / parseFloat(trainCalculator.txCarAxles.value)
+		var carFaceArea = parseFloat(trainCalculator.txFaceArea.value)
+		var gradeDrag = parseFloat(trainCalculator.txGrade.value) * 20 * totalTons		
+		var curveDrag = parseFloat(trainCalculator.txCurveDegrees.value) * totalTons 
+		var rollDrag = 0
+		var mph = Speed
+		//var requiredHp = 0
+		//var locoTE = 0
+		//Calc intermediat values so don't have to keep fetching from form.
+		locoTE = (locoHp * 550) / (mph * 1.467)  //locoHp above takes into acct efficiency.
+		carAxles = parseFloat(trainCalculator.txCarAxles.value)
+		gradeFactor = parseFloat(trainCalculator.txGrade.value) * 20
+		curveFactor = parseFloat(trainCalculator.txCurveDegrees.value)
+		locoDrag = ((2.18 + (.045*mph) + (.1*mph*mph/200))*locoTons)+(gradeFactor*locoTons)+(curveFactor*locoTons)
+		// Try each train ton until drag is greater than loco pull.
+		for(tons = 1; tons < 50000; tons = tons + 10){
+			tonsPerCar = tons / carCount
+			tonsPerAxle = tonsPerCar / carAxles
+			gradeDrag = gradeFactor * tons
+			curveDrag = curveFactor * tons
+			rollDrag = (1.3 + (29/tonsPerAxle) + (0.045 * mph) + (0.0005 * carFaceArea * mph * mph / tonsPerCar)) * tons
+			totalDrag = (rollDrag + locoDrag + gradeDrag + curveDrag)
+			//alert(locoDrag)
+			if(totalDrag > locoTE){
+				break
+			}
+		}
+		assignAnswers(locoHp, mph, rollDrag, gradeDrag, curveDrag, totalDrag)
+		trainCalculator.taAnswers.value = trainCalculator.taAnswers.value + "        Tons = " +  tons +" tons \n"
+	}
+
+	function assignAnswers(locoHp, mph, rollDrag, gradeDrag, curveDrag, totalDrag){
+		// Assign answers
+		trainCalculator.taAnswers.value = "       Speed = " + (parseInt((mph * 10))) / 10 + " mph \n"
+		trainCalculator.taAnswers.value = trainCalculator.taAnswers.value + "Rolling drag = " + parseInt(rollDrag) + " lbs \n"
+		trainCalculator.taAnswers.value = trainCalculator.taAnswers.value + "  Grade drag = " +  parseInt(gradeDrag) +" lbs \n"
+		trainCalculator.taAnswers.value = trainCalculator.taAnswers.value + "  Curve drag = " +  parseInt(curveDrag) +" lbs \n"
+		var totalDrag = rollDrag + gradeDrag + curveDrag
+		trainCalculator.taAnswers.value = trainCalculator.taAnswers.value + "  Total drag = " +  parseInt(totalDrag) + " lbs \n"
+		if(totalDrag > 450000) {trainCalculator.taAnswers.value = trainCalculator.taAnswers.value + " (Coupler limits? Distribute power?) \n"}
+		trainCalculator.taAnswers.value = trainCalculator.taAnswers.value + "  Rolling Hp = " +  parseInt(rollDrag * mph * 1.4666 /550) + " hp \n"
+		trainCalculator.taAnswers.value = trainCalculator.taAnswers.value + "    Grade Hp = " +  parseInt(gradeDrag  * mph * 1.4666 /550) +" hp \n"
+		trainCalculator.taAnswers.value = trainCalculator.taAnswers.value + "    Curve Hp = " +  parseInt(curveDrag  * mph * 1.4666 /550) +" hp \n"
+		trainCalculator.taAnswers.value = trainCalculator.taAnswers.value + "    Total Hp = " +  parseInt((rollDrag+gradeDrag + curveDrag)  * mph * 1.4666 /550 ) + " hp \n"
+	}
+
+	function resetInputs(){
+		trainCalculator.txLocoHp.value = "0"
+		trainCalculator.txLocoTons.value = "0"
+		trainCalculator.txTrainTons.value = "0"
+		trainCalculator.txCarCount.value = "0"
+		trainCalculator.txGrade.value = "0"
+		trainCalculator.txCurveDegrees.value = "0"
+		trainCalculator.txLocoEff.value = "85"
+		trainCalculator.txFaceArea.value = "110"
+		trainCalculator.txCarAxles.value = "4"
+	}
+
+	function openHelp(){
+		helpWindow = window.open("", "helpWin", "location=yes,scrollbars=yes,width=500,height=400")
+		helpWindow.document.write("<HTML><TITLE>Help for Train Forces Calculator</TITLE><BODY><H2>Train Forces Calculator Help</H2>This thing is free so don't get snooty and don't expect on-line support.<P><UL><LI>All input fields must be a number. No blanks and no text.<LI>You must enter reasonable values. There is no input range error checking.<LI>The number 0  is a legal value only for Grade% and Curve Degrees.</UL><B>Reasonable Inputs</B><BR>When the calculator starts the inputs are filled with reasonable values as an example. <BR>You may click the Calculate button and see the results for this train.<BR>Or you can click the Reset button and enter your own inputs.<P>The calculator has no input range error checking and may crash with silly inputs. <BR>Results may not be correct for silly inputs. Reasonable inputs are:<UL><LI><B>Loco Horsepower:</B> 100 to 100000 <BR>Enter the TOTAL hp for all loco units combined. <BR>Realistically 600 to 6000 Hp per loco unit.<LI><B>Loco Tons:</B> 10 to 5000. <BR>Enter the TOTAL tons for all loco units combined. <BR>Realistically 130 to 230 tons per loco unit.<LI><B>Loco Eff%:</B> 10 to 100. <BR>Loco efficiency in percent. Loco hp is typically rated at the output of the prime mover. <BR>The transmission of a loco consists of the main generator/alternator, <BR> the wiring to the traction motors, the traction motors, and the gearing. <BR>The overall efficiency of these transmission items is nominally about 85%.<LI><B>Car Count:</B> 1 to 5000. <BR>Realistically 1 to 250.<LI><B>Car Face Area:</B> 80 to 300. <BR>The face area of the cars has an effect on drag account of air resistance. <BR>A typical coal hopper is about 110 sq. ft. A doublestack intermodal is about 220.<LI><B>Axles per Car:</B> 2 to 30 <BR>99% of North American RR cars have 4 axles. Some have 2. Some have 6. <BR>BN's Trough Train has 20 axles per car. <BR>You must select a value for the entire train that represents the average number of axles per car.<LI><B>Train Tons:</B> 20 to 100000. <BR>Realistically 20 to 25000.<LI><B>Grade%:</B> -6 to 100. <BR>Realistically 0 to 7.  (0 is permitted for this item). <BR>The given grade is assumed to be at least as long as the train. <BR>You may use negative grades for downhill.<LI><B>Curve Degrees:</B> 0 to 60. <BR>Realistically 0 to 15.  (0 is permitted for this item). <BR>The given curve is assumed to be at least as long as the train.</UL><P><B>Locomotive Weight</B><BR>The weight of the locomotives is included in the calculations. <BR>If you want to see results for just the train without considering the weight of the locos <BR>just enter 1 for the Loco Tons. (Zero is not allowed).<P><B>Typical Trains:</B><BR>Coal Train: <BR>Three SD70MACs are 12000 hp and weigh 615 tons. <BR>A train of 130 cars weighs 17550 tons.<P>Freight Train: <BR>An SD70 and a C44 are 8700 hp and weigh 394 tons. <BR>A train of 105 cars weighs 7350 tons.<P>Doublestack Intermodal Train: <BR>Five C44s are 22000 hp and weigh 1000 tons. <BR>A train of 25 cars weighs 7200 tons. <BR>There are 12 axles per car and Face Area is 200.</BODY></HTML>")
+	}
+
+	//Initialize for finding speed. Always ran at start account outside of any function.
+	raSpeedClicked()
+
+	// end hiding script -->
+	</SCRIPT>
+
+
+</HEAD>
+
+<BODY BGCOLOR=GREEN TEXT=WHITE>
+	<!-- *******************************  Begin Form ******************** -->
+	<FORM NAME="trainCalculator">
+	<H3>Train Forces Calculator by AAK</H3>
+	
+	<FIELDSET>
+		Find: 
+		<INPUT NAME="raCalc" TYPE=RADIO VALUE="Speed" onClick="raSpeedClicked()" CHECKED>Speed
+		<INPUT NAME="raCalc" TYPE=RADIO VALUE="Horsepower" onClick="raHorsepowerClicked()">Horsepower
+		<INPUT NAME="raCalc" TYPE=RADIO VALUE="Tonnage" onClick="raTonnageClicked()">Tonnage
+	</FIELDSET>
+	
+	<FIELDSET>
+	<TABLE>
+	<TR>
+		<TD ALIGN=RIGHT>Loco Hp</TD>
+		<TD><INPUT NAME="txLocoHp" TYPE=TEXT SIZE=8 VALUE=12000></TD>
+		<TD ALIGN=RIGHT>Car Count</TD>
+		<TD><INPUT NAME="txCarCount" TYPE=TEXT SIZE=8 VALUE=82></TD>		
+		<TD ALIGN=RIGHT>Train Tons</TD>
+		<TD><INPUT NAME="txTrainTons" TYPE=TEXT SIZE=8 VALUE=6973></TD>
+		<TD ALIGN=RIGHT>Speed</TD>
+		<TD><INPUT NAME="txSpeed" TYPE=TEXT SIZE=8 VALUE=0 DISABLED></TD>
+	</TR>
+	<TR>
+		<TD ALIGN=RIGHT>Loco Tons</TD>
+		<TD><INPUT NAME="txLocoTons" TYPE=TEXT SIZE=8 VALUE=820></TD>		
+		<TD ALIGN=RIGHT>Car Face Area</TD>
+		<TD><INPUT NAME="txFaceArea" TYPE=TEXT SIZE=8 VALUE=110></TD>		
+		<TD ALIGN=RIGHT>Grade%</TD>
+		<TD><INPUT NAME="txGrade" TYPE=TEXT SIZE=8 VALUE=1.25></TD>
+	</TR>
+	<TR>
+		<TD ALIGN=RIGHT>Loco Eff%</TD>
+		<TD><INPUT NAME="txLocoEff" TYPE=TEXT SIZE=8 VALUE=85></TD>
+		<TD ALIGN=RIGHT>Axles per Car</TD>
+		<TD><INPUT NAME="txCarAxles" TYPE=TEXT SIZE=8 VALUE=4></TD>
+		<TD ALIGN=RIGHT>Curve Degrees</TD>
+		<TD><INPUT NAME="txCurveDegrees" TYPE=TEXT SIZE=8 VALUE=2.6></TD>
+	</TR>		
+	</TABLE>
+	</FIELDSET>
+
+	<P>
+	<INPUT TYPE=BUTTON VALUE="Calculate"  onClick="getCalcToPerform()">
+	<INPUT TYPE=BUTTON VALUE="Reset"  onClick="resetInputs()">
+	<INPUT TYPE=BUTTON VALUE="Help"  onClick="openHelp()">
+	<P>
+
+	<TEXTAREA NAME="taAnswers" ROWS=12 COLS=40></TEXTAREA>
+
+	<P>
+	<A HREF="http://www.alkrug.vcn.com/home.html">AAK's Homepage</A>
+
+	</FORM>
+	<!-- *****************************  End Form ************* -->
+
+</BODY>
+</HTML>
